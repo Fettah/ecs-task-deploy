@@ -15,14 +15,9 @@ end
 
 cluster = ARGV[0]
 service = ARGV[1]
-image_tag = ARGV[2]
-time_to_wait = ARGV[3].to_i
+image_tag = ARGV[2] || latest
+time_to_wait = ARGV[3].to_i || 600
 
-# Use as env variables
-credentials = { AWS_REGION: '',
-                AWS_ACCESS_KEY_ID: '',
-                AWS_SECRET_ACCESS_KEY: ''
-            }
 
 response = ecs.describe_services({cluster: cluster, services:  [service] })
 first_active_task = response.services.first.deployments.select{|d| d.status == "ACTIVE"}.first

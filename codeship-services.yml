@@ -4,3 +4,4 @@ services:
   ecs-task-deploy:
     build: .
     encrypted_env_file: dockercfg.encrypted
+    cached: true

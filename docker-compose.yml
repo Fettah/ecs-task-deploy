@@ -3,4 +3,5 @@ version: '2'
 services:
   ecs-task-deploy:
     build: .
+    # command: ruby ecs-task-deploy.rb cluster-name service-name image-tag time-to-wait
 
