@@ -19,9 +19,9 @@ image_tag = ARGV[2]
 time_to_wait = ARGV[3].to_i
 
 # Use as env variables
-credentials = { AWS_REGION: 'eu-central-1',
-                AWS_ACCESS_KEY_ID: 'AKIAJXIQ3F4OPH4QLFCA',
-                AWS_SECRET_ACCESS_KEY: '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'
+credentials = { AWS_REGION: '',
+                AWS_ACCESS_KEY_ID: '',
+                AWS_SECRET_ACCESS_KEY: ''
             }
 
 response = ecs.describe_services({cluster: cluster, services:  [service] })
