@@ -64,11 +64,10 @@ count = 0
 wait_seconds = 2 # 2 seconds
 deployment_success = false
 
-
 while(count < time_to_wait) do
     response = ecs.describe_services(cluster: cluster, services: [service])
     running_service = response.services.first
-    if running_service.desired_count > 0
+    if running_service.deployments.count
         sleep(wait_seconds)
         count = count + wait_seconds
         print "."
