@@ -1,0 +1,9 @@
+- type: serial
+  steps:
+    - type: push
+      name: pushing to docker hub
+      tag: master
+      image_tag: latest
+      service: ecs-task-deploy
+      image_name: fettah/ecs-task-deploy
+      encrypted_dockercfg_path: dockercfg.encrypted
