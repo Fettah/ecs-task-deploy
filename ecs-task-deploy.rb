@@ -13,45 +13,13 @@ class EcsTaskDeploy
         @desired_task_ARN     = nil
     end
 
-
-    def transform_to_validate_task(task)
-        task_as_hash = task.to_h
-        task_as_hash.delete(:revision)
-        task_as_hash.delete(:status)
-        task_as_hash.delete(:task_definition_arn)
-        task_as_hash.delete(:requires_attributes)
-        task_as_hash
-    end
-
     def start_deployment
-        response = @ecs_client.describe_services({cluster: @cluster, services:  [@service] })
-        first_active_task = response.services.first.deployments.select{|d| d.status == "ACTIVE"}.first
 
-        # @primary_task_ARN = response.services.first.task_definition(ecs-deploy bash script)
-        if first_active_task.nil?
-            @primary_task_ARN = response.services.first.deployments.select{|d| d.status == "PRIMARY"}.first.task_definition
-        else
-            @primary_task_ARN = first_active_task.task_definition
-        end
-
-        # update containers images. all images will be having the same tag
-        response = @ecs_client.describe_task_definition(task_definition: @primary_task_ARN)
-        task_definition = response.task_definition
-        image = task_definition.container_definitions.first.image
-        current_tag = image.split(':').last
-
-        # Create a new task definition with a different tag for all images
-        new_container_definitions = task_definition.container_definitions.each do |container_df|
-            container_df.image = container_df.image.gsub(/#{current_tag}$/, @desired_image_tag)
-        end
-
-        task_definition.container_definitions = new_container_definitions
-        new_task_definition = task_definition
-
-        valid_task = transform_to_validate_task(new_task_definition)
+        @primary_task_ARN = get_primary_task_arn
+        new_valid_task = generate_new_task
 
         # Register the new task definition
-        response = @ecs_client.register_task_definition(valid_task)
+        response = @ecs_client.register_task_definition(new_valid_task)
         @desired_task_ARN = response.task_definition.task_definition_arn
 
         # Update services
@@ -82,6 +50,48 @@ class EcsTaskDeploy
             response = @ecs_client.describe_services(services: [@service])
             raise "Deployment failed #{ response.failures }"
         end
+    end
+
+
+    def make_valid_task(task)
+        task_as_hash = task.to_h
+        task_as_hash.delete(:revision)
+        task_as_hash.delete(:status)
+        task_as_hash.delete(:task_definition_arn)
+        task_as_hash.delete(:requires_attributes)
+        task_as_hash
+    end
+
+    def get_primary_task_arn
+        response = @ecs_client.describe_services({cluster: @cluster, services:  [@service] })
+        active_task = response.services.first.deployments.select{|d| d.status == "ACTIVE"}.first
+
+        # @primary_task_ARN = response.services.first.task_definition(ecs-deploy bash script)
+        if active_task.nil?
+            primary_tsk_arn = response.services.first.deployments.select{|d| d.status == "PRIMARY"}.first.task_definition
+        else
+            primary_tsk_arn = active_task.task_definition
+        end
+        primary_tsk_arn
+    end
+
+    def generate_new_task
+        # update containers images. all images will be having the same tag
+        response = @ecs_client.describe_task_definition(task_definition: @primary_task_ARN)
+        task_definition = response.task_definition
+        image = task_definition.container_definitions.first.image
+        current_tag = image.split(':').last
+
+        # Create a new task definition with a different tag for all images
+        new_container_definitions = task_definition.container_definitions.each do |container_df|
+            container_df.image = container_df.image.gsub(/#{current_tag}$/, @desired_image_tag)
+        end
+
+        task_definition.container_definitions = new_container_definitions
+        new_task_definition = task_definition
+
+        valid_task = make_valid_task(new_task_definition)
+        valid_task
     end
 end
 
