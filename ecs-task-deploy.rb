@@ -7,7 +7,7 @@ class EcsTaskDeploy
         @ecs_client           = Aws::ECS::Client.new()
         @cluster              = args[0]
         @service              = args[1]
-        @desired_image_tag    = args[2]||latest
+        @desired_image_tag    = args[2]||"latest"
         @time_to_wait         = args[3].to_i||600
         @primary_task_ARN     = nil
         @desired_task_ARN     = nil
